@@ -28,7 +28,7 @@ That easy!
 
 
 ### Instructions
-You can clean text with the `clean_text` function included in the `normalizer` module
+You can clean text using the `clean` method of the `TextCleaner` class:
 
 ```python
 from textcleaner import TextCleaner
