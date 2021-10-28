@@ -31,11 +31,11 @@ class TextCleaner:
             self.REPLACE_UNICODE_NBSP,
             self.REPLACE_NEWLINES_TABS,
             self.REMOVE_EXTRA_QUOTATION,
-            self.REMOVE_EXTRA_WHITESPACES,
             self.REMOVE_URLS,
             self.REMOVE_PUNCTUATION,
             self.LOWERCASE,
             self.REMOVE_DIGITS,
+            self.REMOVE_EXTRA_WHITESPACES,
         ]
 
     def clean(
@@ -102,7 +102,9 @@ def _remove_extra_quotation(text: str) -> str:
 
 def _replace_newlines_tabs(text: str) -> str:
     """ Removes all the occurrences of newlines, tabs, and combinations like: \\n, \\. """
-    return text.replace("\\n", " ").replace("\n", ' ').replace("\t", " ").replace("\\", " ")
+    text = text.translate(str.maketrans("\n\r", "  "))
+
+    return text.replace("\\n", " ").replace("\t", " ").replace("\\", " ")
 
 
 def _remove_urls(text: str) -> str:
