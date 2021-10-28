@@ -1,3 +1,4 @@
+import sys
 import re
 import html
 import unidecode
@@ -22,7 +23,7 @@ class TextCleaner:
     LOWERCASE = "lowercase"
     REMOVE_DIGITS = "remove_digits"
 
-    def __init__(self, text: str):
+    def __init__(self):
         self._steps = [
             self.REMOVE_HTML_TAGS,
             self.DECODE_HTML_ENTITIES,
@@ -37,14 +38,15 @@ class TextCleaner:
             self.REMOVE_DIGITS,
         ]
 
-        self._text = text.strip()
-
     def clean(
         self,
+        text: str,
         steps: Optional[List[str]] = None,
         exclude: Optional[List[str]] = None
     ) -> str:
 
+        text = text.strip()
+        
         if not steps:
             steps = self._steps
 
@@ -53,70 +55,81 @@ class TextCleaner:
 
         for step in steps:
             try:
-                class_method = getattr(TextCleaner, f"_{step}")
+                step_function = getattr(sys.modules[__name__], f"_{step}")
             except AttributeError:
                 continue
 
-            class_method(self)
+            text = step_function(text)
 
-        return self._text
+        return text
 
-    def _remove_html_tags(self) -> None:
-        """ Removes html tags """
-        soup = BeautifulSoup(self._text, "html.parser")
 
-        self._text = soup.get_text(separator=" ")
+def _remove_html_tags(text: str) -> str:
+    """ Removes html tags """
+    soup = BeautifulSoup(text, "html.parser")
 
-    def _decode_html_entities(self) -> None:
-        """ Converts html entities in the corresponding unicode string"""
-        self._text = html.unescape(self._text)
+    return soup.get_text(separator=" ")
+    
 
-    def _remove_extra_whitespaces(self) -> None:
-        """ Removes extra whitespaces """
-        pattern = re.compile(r'\s+')
+def _decode_html_entities(text: str) -> str:
+    """ Converts html entities in the corresponding unicode string"""
+    return html.unescape(text)
 
-        self._text = re.sub(pattern, " ", self._text)
 
-    def _replace_accented(self) -> None:
-        """ Removes all accented characters"""
-        self._text = unidecode.unidecode(self._text)
+def _remove_extra_whitespaces(text: str) -> str:
+    """ Removes extra whitespaces """
+    pattern = re.compile(r'\s+')
 
-    def _replace_unicode_nbsp(self) -> None:
-        """ Removes unicode whitespaces"""
-        self._text = self._text.replace(u'\xa0', u' ')
+    return re.sub(pattern, " ", text)
 
-    def _remove_extra_quotation(self) -> None:
-        """ Removes extra quotation marks """
-        text = re.sub(r'\"{2,}', '"', self._text)
 
-        self._text = re.sub(r'\'{2,}', "'", text)
+def _replace_accented(text: str) -> str:
+    """ Removes all accented characters"""
+    return unidecode.unidecode(text)
 
-    def _replace_newlines_tabs(self) -> None:
-        """ Removes all the occurrences of newlines, tabs, and combinations like: \\n, \\. """
-        self._text = self._text.replace("\\n", " ").replace("\n", ' ').replace("\t", " ").replace("\\", " ")
 
-    def _remove_urls(self) -> None:
-        """ Removes all urls from text"""
-        pattern = r'(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?'
+def _replace_unicode_nbsp(text: str) -> str:
+    """ Removes unicode whitespaces"""
+    return text.replace(u'\xa0', u' ')
 
-        self._text = re.sub(pattern, '', self._text, flags=re.MULTILINE)
 
-    def _remove_punctuation(self) -> None:
-        """ Removes punctuation from text """
-        punctuation = string.punctuation + '¿¡'
-        table = str.maketrans('', '', punctuation)
-        words = self._text.split()
+def _remove_extra_quotation(text: str) -> str:
+    """ Removes extra quotation marks """
+    text = re.sub(r'\"{2,}', '"', text)
 
-        stripped = [word.translate(table) for word in words]
+    return re.sub(r'\'{2,}', "'", text)
 
-        self._text = ' '.join(stripped)
 
-    def _lowercase(self) -> None:
-        """ Transform text to lowercase"""
-        self._text = self._text.lower()
+def _replace_newlines_tabs(text: str) -> str:
+    """ Removes all the occurrences of newlines, tabs, and combinations like: \\n, \\. """
+    return text.replace("\\n", " ").replace("\n", ' ').replace("\t", " ").replace("\\", " ")
 
-    def _remove_digits(self) -> None:
-        """ Remove digits from text"""
-        table = str.maketrans('', '', digits)
 
-        self._text = self._text.translate(table)
+def _remove_urls(text: str) -> str:
+    """ Removes all urls from text"""
+    pattern = r'(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?'
+
+    return re.sub(pattern, '', text, flags=re.MULTILINE)
+
+
+def _remove_punctuation(text: str) -> str:
+    """ Removes punctuation from text """
+    punctuation = string.punctuation + '¿¡'
+    table = str.maketrans('', '', punctuation)
+    words = text.split()
+
+    stripped = [word.translate(table) for word in words]
+
+    return ' '.join(stripped)
+
+
+def _lowercase(text: str) -> str:
+    """ Transform text to lowercase"""
+    return text.lower()
+
+
+def _remove_digits(text: str) -> str:
+    """ Remove digits from text"""
+    table = str.maketrans('', '', digits)
+
+    return text.translate(table)
