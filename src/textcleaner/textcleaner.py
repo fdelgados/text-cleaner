@@ -2,6 +2,7 @@ import re
 import html
 import unidecode
 import string
+from string import digits
 
 from typing import Optional, List
 
@@ -9,27 +10,41 @@ from bs4 import BeautifulSoup
 
 
 class TextCleaner:
+    REMOVE_HTML_TAGS = "remove_html_tags"
+    DECODE_HTML_ENTITIES = "decode_html_entities"
+    REPLACE_ACCENTED = "replace_accented"
+    REPLACE_UNICODE_NBSP = "replace_unicode_nbsp"
+    REPLACE_NEWLINES_TABS = "replace_newlines_tabs"
+    REMOVE_EXTRA_QUOTATION = "remove_extra_quotation"
+    REMOVE_EXTRA_WHITESPACES = "remove_extra_whitespaces"
+    REMOVE_URLS = "remove_urls"
+    REMOVE_PUNCTUATION = "remove_punctuation"
+    LOWERCASE = "lowercase"
+    REMOVE_DIGITS = "remove_digits"
+
     def __init__(self, text: str):
         self._steps = [
-            "remove_html_tags",
-            "decode_html_entities",
-            "replace_accented",
-            "replace_unicode_nbsp",
-            "replace_newlines_tabs",
-            "remove_extra_quotation",
-            "remove_extra_whitespaces",
-            "remove_urls",
-            "remove_punctuation",
-            "replace_currency",
+            self.REMOVE_HTML_TAGS,
+            self.DECODE_HTML_ENTITIES,
+            self.REPLACE_ACCENTED,
+            self.REPLACE_UNICODE_NBSP,
+            self.REPLACE_NEWLINES_TABS,
+            self.REMOVE_EXTRA_QUOTATION,
+            self.REMOVE_EXTRA_WHITESPACES,
+            self.REMOVE_URLS,
+            self.REMOVE_PUNCTUATION,
+            self.LOWERCASE,
+            self.REMOVE_DIGITS,
         ]
 
-        self._text = text
+        self._text = text.strip()
 
     def clean(
         self,
         steps: Optional[List[str]] = None,
         exclude: Optional[List[str]] = None
     ) -> str:
+
         if not steps:
             steps = self._steps
 
@@ -95,3 +110,13 @@ class TextCleaner:
         stripped = [word.translate(table) for word in words]
 
         self._text = ' '.join(stripped)
+
+    def _lowercase(self) -> None:
+        """ Transform text to lowercase"""
+        self._text = self._text.lower()
+
+    def _remove_digits(self) -> None:
+        """ Remove digits from text"""
+        table = str.maketrans('', '', digits)
+
+        self._text = self._text.translate(table)
